@@ -136,6 +136,7 @@ public class WildfireHelicopterTriage {
         private final List<Patient> patients;
         private int nextArrivalNumber;
         private int availableResources;
+        private int escapedPatientsCount;
         private final int priority1ResourceCost;
         private final int priority2ResourceCost;
         private final int priority3ResourceCost;
@@ -163,6 +164,7 @@ public class WildfireHelicopterTriage {
             this.patients = new ArrayList<>();
             this.nextArrivalNumber = 1;
             this.availableResources = availableResources;
+            this.escapedPatientsCount = 0;
             this.priority1ResourceCost = priority1ResourceCost;
             this.priority2ResourceCost = priority2ResourceCost;
             this.priority3ResourceCost = priority3ResourceCost;
@@ -229,8 +231,6 @@ public class WildfireHelicopterTriage {
                 boolean stable = conditionChoice == 2;
 
                 boolean canWalk = generateCanWalk(critical, serious, stable);
-
-                // In this scenario, helicopter is the evacuation method.
                 boolean needsHelicopter = true;
 
                 String name = generateRandomName();
@@ -298,6 +298,7 @@ public class WildfireHelicopterTriage {
             }
 
             patients.removeAll(boarded);
+            escapedPatientsCount += boarded.size();
 
             return new LoadResult(boarded, waitingForResources, resourcesBefore, availableResources);
         }
@@ -352,6 +353,7 @@ public class WildfireHelicopterTriage {
                     System.out.println("No patients need helicopter evacuation.");
                 }
 
+                System.out.println("Patients escaped so far: " + escapedPatientsCount);
                 System.out.println("Resources remaining: " + result.getResourcesAfter());
                 return;
             }
@@ -369,6 +371,7 @@ public class WildfireHelicopterTriage {
             }
 
             System.out.println("Helicopter departed with " + boarded.size() + " patient(s).");
+            System.out.println("Patients escaped so far: " + escapedPatientsCount);
             System.out.println("Resources remaining: " + result.getResourcesAfter());
         }
 
@@ -378,10 +381,38 @@ public class WildfireHelicopterTriage {
             System.out.println("PRIORITY_1 cost: " + priority1ResourceCost);
             System.out.println("PRIORITY_2 cost: " + priority2ResourceCost);
             System.out.println("PRIORITY_3 cost: " + priority3ResourceCost);
+            System.out.println("Patients escaped so far: " + escapedPatientsCount);
+            System.out.println("Patients still in tent: " + patients.size());
         }
 
         public int getAvailableResources() {
             return availableResources;
+        }
+
+        public int getEscapedPatientsCount() {
+            return escapedPatientsCount;
+        }
+
+        public int getRemainingPatientsCount() {
+            return patients.size();
+        }
+
+        public boolean hasPatientsWaiting() {
+            return !getEvacuationQueue().isEmpty();
+        }
+
+        public boolean isOutOfResources() {
+            return availableResources <= 0;
+        }
+
+        public boolean cannotEvacuateNextPatient() {
+            List<Patient> evacuationQueue = getEvacuationQueue();
+
+            if (evacuationQueue.isEmpty()) {
+                return false;
+            }
+
+            return availableResources < evacuationQueue.get(0).getResourceNeeded();
         }
 
         private void validateConditionFlags(boolean critical, boolean serious, boolean stable) {
@@ -545,6 +576,14 @@ public class WildfireHelicopterTriage {
                     break;
                 case "5":
                     system.loadHelicopterInteractive(helicopterCapacity);
+
+                    if (system.isOutOfResources()) {
+                        printOutOfResourcesEnding(system);
+                        running = false;
+                    } else if (system.hasPatientsWaiting() && system.cannotEvacuateNextPatient()) {
+                        printNoFurtherEvacuationsEnding(system);
+                        running = false;
+                    }
                     break;
                 case "6":
                     system.displayResourceStatus();
@@ -559,6 +598,30 @@ public class WildfireHelicopterTriage {
         }
 
         scanner.close();
+    }
+
+    private static void printOutOfResourcesEnding(TriageSystem system) {
+        System.out.println("\n--- Simulation Over ---");
+        System.out.println("The medical tent has run out of resources.");
+        System.out.println("Patients escaped by helicopter: " + system.getEscapedPatientsCount());
+        System.out.println("Patients remaining in tent: " + system.getRemainingPatientsCount());
+    }
+
+    private static void printNoFurtherEvacuationsEnding(TriageSystem system) {
+        List<Patient> queue = system.getEvacuationQueue();
+
+        System.out.println("\n--- Simulation Over ---");
+        System.out.println("No further evacuations are possible with the remaining resources.");
+
+        if (!queue.isEmpty()) {
+            Patient nextPatient = queue.get(0);
+            System.out.println("Next highest-priority patient: " + nextPatient.getName());
+            System.out.println("Resources needed: " + nextPatient.getResourceNeeded());
+            System.out.println("Resources remaining: " + system.getAvailableResources());
+        }
+
+        System.out.println("Patients escaped by helicopter: " + system.getEscapedPatientsCount());
+        System.out.println("Patients remaining in tent: " + system.getRemainingPatientsCount());
     }
 
     private static int readPositiveInt(Scanner scanner, String prompt) {
