@@ -83,11 +83,11 @@ public class WildfireHelicopterTriageTest {
         WildfireHelicopterTriage.TriageSystem system =
                 new WildfireHelicopterTriage.TriageSystem(20, 4, 2, 1);
 
-        system.addPatient("David", false, false, true, true, true);    // P3
-        system.addPatient("Liam", true, false, false, false, false);   // P1, no helicopter
-        system.addPatient("James", false, true, false, false, true);   // P2
-        system.addPatient("Maria", true, false, false, false, true);   // P1
-        system.addPatient("Elena", true, false, false, false, true);   // P1
+        system.addPatient("David", false, false, true, true, true);
+        system.addPatient("Liam", true, false, false, false, false);
+        system.addPatient("James", false, true, false, false, true);
+        system.addPatient("Maria", true, false, false, false, true);
+        system.addPatient("Elena", true, false, false, false, true);
 
         List<WildfireHelicopterTriage.Patient> queue = system.getEvacuationQueue();
 
@@ -103,9 +103,9 @@ public class WildfireHelicopterTriageTest {
         WildfireHelicopterTriage.TriageSystem system =
                 new WildfireHelicopterTriage.TriageSystem(7, 4, 2, 1);
 
-        system.addPatient("Maria", true, false, false, false, true);   // 4
-        system.addPatient("James", false, true, false, false, true);   // 2
-        system.addPatient("David", false, false, true, true, true);    // 1
+        system.addPatient("Maria", true, false, false, false, true);
+        system.addPatient("James", false, true, false, false, true);
+        system.addPatient("David", false, false, true, true, true);
 
         WildfireHelicopterTriage.LoadResult result = system.loadHelicopter(3);
 
@@ -121,6 +121,23 @@ public class WildfireHelicopterTriageTest {
         assertEquals(0, result.getResourcesAfter());
         assertEquals(0, system.getAvailableResources());
         assertEquals(0, system.getAllPatients().size());
+        assertEquals(3, system.getEscapedPatientsCount());
+    }
+
+    @Test
+    public void testEscapedPatientsCountAccumulatesAcrossLoads() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(10, 4, 2, 1);
+
+        system.addPatient("Maria", true, false, false, false, true);
+        system.addPatient("James", false, true, false, false, true);
+        system.addPatient("David", false, false, true, true, true);
+
+        system.loadHelicopter(2);
+        assertEquals(2, system.getEscapedPatientsCount());
+
+        system.loadHelicopter(2);
+        assertEquals(3, system.getEscapedPatientsCount());
     }
 
     @Test
@@ -128,9 +145,9 @@ public class WildfireHelicopterTriageTest {
         WildfireHelicopterTriage.TriageSystem system =
                 new WildfireHelicopterTriage.TriageSystem(5, 4, 2, 1);
 
-        system.addPatient("Maria", true, false, false, false, true);   // 4
-        system.addPatient("James", false, true, false, false, true);   // 2
-        system.addPatient("David", false, false, true, true, true);    // 1
+        system.addPatient("Maria", true, false, false, false, true);
+        system.addPatient("James", false, true, false, false, true);
+        system.addPatient("David", false, false, true, true, true);
 
         WildfireHelicopterTriage.LoadResult result = system.loadHelicopter(3);
 
@@ -147,6 +164,7 @@ public class WildfireHelicopterTriageTest {
         assertEquals(5, result.getResourcesBefore());
         assertEquals(1, result.getResourcesAfter());
         assertEquals(1, system.getAvailableResources());
+        assertEquals(1, system.getEscapedPatientsCount());
 
         assertEquals(2, remaining.size());
         assertEquals("James", remaining.get(0).getName());
@@ -173,6 +191,7 @@ public class WildfireHelicopterTriageTest {
 
         assertEquals(20, result.getResourcesBefore());
         assertEquals(12, result.getResourcesAfter());
+        assertEquals(2, system.getEscapedPatientsCount());
 
         assertEquals(1, remaining.size());
         assertEquals("James", remaining.get(0).getName());
@@ -193,6 +212,7 @@ public class WildfireHelicopterTriageTest {
         assertEquals(10, result.getResourcesBefore());
         assertEquals(10, result.getResourcesAfter());
         assertEquals(2, system.getAllPatients().size());
+        assertEquals(0, system.getEscapedPatientsCount());
     }
 
     @Test
@@ -221,6 +241,7 @@ public class WildfireHelicopterTriageTest {
         assertEquals("James", boarded.get(1).getName());
 
         assertEquals(0, system.getAvailableResources());
+        assertEquals(2, system.getEscapedPatientsCount());
         assertEquals(1, system.getAllPatients().size());
         assertEquals("David", system.getAllPatients().get(0).getName());
     }
@@ -288,5 +309,74 @@ public class WildfireHelicopterTriageTest {
 
         assertThrows(IllegalArgumentException.class, () -> system.generateRandomPatients(0));
         assertThrows(IllegalArgumentException.class, () -> system.generateRandomPatients(-5));
+    }
+
+    @Test
+    public void testGetRemainingPatientsCount() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(10, 4, 2, 1);
+
+        system.addPatient("Maria", true, false, false, false, true);
+        system.addPatient("James", false, true, false, false, true);
+
+        assertEquals(2, system.getRemainingPatientsCount());
+
+        system.loadHelicopter(1);
+
+        assertEquals(1, system.getRemainingPatientsCount());
+    }
+
+    @Test
+    public void testHasPatientsWaiting() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(10, 4, 2, 1);
+
+        assertFalse(system.hasPatientsWaiting());
+
+        system.addPatient("Maria", true, false, false, false, true);
+
+        assertTrue(system.hasPatientsWaiting());
+    }
+
+    @Test
+    public void testIsOutOfResources() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(4, 4, 2, 1);
+
+        assertFalse(system.isOutOfResources());
+
+        system.addPatient("Maria", true, false, false, false, true);
+        system.loadHelicopter(1);
+
+        assertTrue(system.isOutOfResources());
+        assertEquals(0, system.getAvailableResources());
+    }
+
+    @Test
+    public void testCannotEvacuateNextPatientWhenResourcesAreTooLow() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(3, 4, 2, 1);
+
+        system.addPatient("Maria", true, false, false, false, true);
+
+        assertTrue(system.cannotEvacuateNextPatient());
+    }
+
+    @Test
+    public void testCannotEvacuateNextPatientFalseWhenEnoughResourcesExist() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(4, 4, 2, 1);
+
+        system.addPatient("Maria", true, false, false, false, true);
+
+        assertFalse(system.cannotEvacuateNextPatient());
+    }
+
+    @Test
+    public void testCannotEvacuateNextPatientFalseWhenNoPatientsWaiting() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(1, 4, 2, 1);
+
+        assertFalse(system.cannotEvacuateNextPatient());
     }
 }
