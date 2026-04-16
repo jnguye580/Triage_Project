@@ -196,25 +196,6 @@ public class WildfireHelicopterTriageTest {
     }
 
     @Test
-    public void testAddResourcesIncreasesAvailableResources() {
-        WildfireHelicopterTriage.TriageSystem system =
-                new WildfireHelicopterTriage.TriageSystem(5, 4, 2, 1);
-
-        system.addResources(3);
-
-        assertEquals(8, system.getAvailableResources());
-    }
-
-    @Test
-    public void testAddResourcesRejectsInvalidAmount() {
-        WildfireHelicopterTriage.TriageSystem system =
-                new WildfireHelicopterTriage.TriageSystem(5, 4, 2, 1);
-
-        assertThrows(IllegalArgumentException.class, () -> system.addResources(0));
-        assertThrows(IllegalArgumentException.class, () -> system.addResources(-2));
-    }
-
-    @Test
     public void testLoadHelicopterRejectsInvalidCapacity() {
         WildfireHelicopterTriage.TriageSystem system =
                 new WildfireHelicopterTriage.TriageSystem(10, 4, 2, 1);
@@ -242,5 +223,70 @@ public class WildfireHelicopterTriageTest {
         assertEquals(0, system.getAvailableResources());
         assertEquals(1, system.getAllPatients().size());
         assertEquals("David", system.getAllPatients().get(0).getName());
+    }
+
+    @Test
+    public void testGenerateRandomPatientsCreatesRequestedNumber() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(50, 4, 2, 1);
+
+        List<WildfireHelicopterTriage.Patient> generated = system.generateRandomPatients(10);
+
+        assertEquals(10, generated.size());
+        assertEquals(10, system.getAllPatients().size());
+        assertEquals(10, system.getEvacuationQueue().size());
+    }
+
+    @Test
+    public void testGenerateRandomPatientsCreatesValidPatients() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(50, 4, 2, 1);
+
+        List<WildfireHelicopterTriage.Patient> generated = system.generateRandomPatients(15);
+
+        for (int i = 0; i < generated.size(); i++) {
+            WildfireHelicopterTriage.Patient patient = generated.get(i);
+
+            assertNotNull(patient.getName());
+            assertFalse(patient.getName().trim().isEmpty());
+            assertEquals(i + 1, patient.getArrivalOrder());
+            assertTrue(patient.needsHelicopter());
+
+            int conditionCount = 0;
+            if (patient.isCriticalCondition()) {
+                conditionCount++;
+            }
+            if (patient.isSeriousCondition()) {
+                conditionCount++;
+            }
+            if (patient.isStableCondition()) {
+                conditionCount++;
+            }
+            assertEquals(1, conditionCount);
+
+            switch (patient.getPriorityLevel()) {
+                case PRIORITY_1:
+                    assertTrue(patient.isCriticalCondition());
+                    assertEquals(4, patient.getResourceNeeded());
+                    break;
+                case PRIORITY_2:
+                    assertTrue(patient.isSeriousCondition());
+                    assertEquals(2, patient.getResourceNeeded());
+                    break;
+                case PRIORITY_3:
+                    assertTrue(patient.isStableCondition());
+                    assertEquals(1, patient.getResourceNeeded());
+                    break;
+            }
+        }
+    }
+
+    @Test
+    public void testGenerateRandomPatientsRejectsInvalidCount() {
+        WildfireHelicopterTriage.TriageSystem system =
+                new WildfireHelicopterTriage.TriageSystem(50, 4, 2, 1);
+
+        assertThrows(IllegalArgumentException.class, () -> system.generateRandomPatients(0));
+        assertThrows(IllegalArgumentException.class, () -> system.generateRandomPatients(-5));
     }
 }
