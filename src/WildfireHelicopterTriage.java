@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 public class WildfireHelicopterTriage {
@@ -138,6 +139,13 @@ public class WildfireHelicopterTriage {
         private final int priority1ResourceCost;
         private final int priority2ResourceCost;
         private final int priority3ResourceCost;
+        private final Random random;
+
+        private static final String[] SAMPLE_NAMES = {
+                "Alex", "Jordan", "Taylor", "Morgan", "Riley",
+                "Casey", "Avery", "Cameron", "Dakota", "Skyler",
+                "Parker", "Quinn", "Hayden", "Rowan", "Emerson"
+        };
 
         public TriageSystem() {
             this(10, 3, 2, 1);
@@ -158,6 +166,7 @@ public class WildfireHelicopterTriage {
             this.priority1ResourceCost = priority1ResourceCost;
             this.priority2ResourceCost = priority2ResourceCost;
             this.priority3ResourceCost = priority3ResourceCost;
+            this.random = new Random();
         }
 
         public Patient addPatient(String name, boolean critical, boolean serious,
@@ -205,6 +214,44 @@ public class WildfireHelicopterTriage {
             System.out.println(patient);
         }
 
+        public List<Patient> generateRandomPatients(int count) {
+            if (count <= 0) {
+                throw new IllegalArgumentException("Number of patients must be greater than 0.");
+            }
+
+            List<Patient> generatedPatients = new ArrayList<>();
+
+            for (int i = 0; i < count; i++) {
+                int conditionChoice = random.nextInt(3);
+
+                boolean critical = conditionChoice == 0;
+                boolean serious = conditionChoice == 1;
+                boolean stable = conditionChoice == 2;
+
+                boolean canWalk = generateCanWalk(critical, serious, stable);
+
+                // In this scenario, helicopter is the evacuation method.
+                boolean needsHelicopter = true;
+
+                String name = generateRandomName();
+
+                Patient patient = addPatient(name, critical, serious, stable, canWalk, needsHelicopter);
+                generatedPatients.add(patient);
+            }
+
+            return generatedPatients;
+        }
+
+        public void generateRandomPatientsInteractive(Scanner scanner) {
+            int count = readPositiveInt(scanner, "How many random patients would you like to generate? ");
+            List<Patient> generatedPatients = generateRandomPatients(count);
+
+            System.out.println(count + " random patient(s) generated:");
+            for (Patient patient : generatedPatients) {
+                System.out.println(patient);
+            }
+        }
+
         public List<Patient> getAllPatients() {
             return new ArrayList<>(patients);
         }
@@ -246,7 +293,7 @@ public class WildfireHelicopterTriage {
                     availableResources -= patient.getResourceNeeded();
                 } else {
                     waitingForResources.add(patient);
-                    break; // strict priority: stop if the next highest-priority patient cannot be supported
+                    break;
                 }
             }
 
@@ -337,20 +384,6 @@ public class WildfireHelicopterTriage {
             return availableResources;
         }
 
-        public void addResources(int amount) {
-            if (amount <= 0) {
-                throw new IllegalArgumentException("Resource amount must be greater than 0.");
-            }
-            availableResources += amount;
-        }
-
-        public void addResourcesInteractive(Scanner scanner) {
-            int amount = readPositiveInt(scanner, "Enter number of resources to add: ");
-            addResources(amount);
-            System.out.println("Resources added successfully.");
-            System.out.println("Available resources: " + availableResources);
-        }
-
         private void validateConditionFlags(boolean critical, boolean serious, boolean stable) {
             int count = 0;
             if (critical) count++;
@@ -383,6 +416,25 @@ public class WildfireHelicopterTriage {
                 default:
                     return priority3ResourceCost;
             }
+        }
+
+        private boolean generateCanWalk(boolean critical, boolean serious, boolean stable) {
+            int chance = random.nextInt(100);
+
+            if (critical) {
+                return chance < 10;
+            } else if (serious) {
+                return chance < 40;
+            } else if (stable) {
+                return chance < 85;
+            }
+
+            return false;
+        }
+
+        private String generateRandomName() {
+            String baseName = SAMPLE_NAMES[random.nextInt(SAMPLE_NAMES.length)];
+            return baseName + nextArrivalNumber;
         }
 
         private String readName(Scanner scanner) {
@@ -467,12 +519,12 @@ public class WildfireHelicopterTriage {
 
         while (running) {
             System.out.println("\n--- Wildfire Helicopter Triage Menu ---");
-            System.out.println("1. Add patient");
-            System.out.println("2. View all patients");
-            System.out.println("3. View helicopter evacuation queue");
-            System.out.println("4. Load helicopter");
-            System.out.println("5. View resource status");
-            System.out.println("6. Add more resources");
+            System.out.println("1. Add patient manually");
+            System.out.println("2. Generate random patients");
+            System.out.println("3. View all patients");
+            System.out.println("4. View helicopter evacuation queue");
+            System.out.println("5. Load helicopter");
+            System.out.println("6. View resource status");
             System.out.println("7. Exit");
             System.out.print("Choose an option: ");
 
@@ -483,19 +535,19 @@ public class WildfireHelicopterTriage {
                     system.addPatientInteractive(scanner);
                     break;
                 case "2":
-                    system.displayAllPatients();
+                    system.generateRandomPatientsInteractive(scanner);
                     break;
                 case "3":
-                    system.displayEvacuationQueue();
+                    system.displayAllPatients();
                     break;
                 case "4":
-                    system.loadHelicopterInteractive(helicopterCapacity);
+                    system.displayEvacuationQueue();
                     break;
                 case "5":
-                    system.displayResourceStatus();
+                    system.loadHelicopterInteractive(helicopterCapacity);
                     break;
                 case "6":
-                    system.addResourcesInteractive(scanner);
+                    system.displayResourceStatus();
                     break;
                 case "7":
                     running = false;
