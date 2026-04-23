@@ -4,7 +4,7 @@ A command line utility system for a hospital operating during a Wildfire
 ## Scenerio
 You are running a field hospital during a wildfire. This wildfire is caused Lord Ozai from the Avatar: The Last Airbender and there is a huge ring of fire that is entrapping the whole city and blocking all exits. The only way out is by helicopter but there is limited space so only a select few can escape at a time and the Avatar has been gone for 100 years.
 
-##Data Structure
+## Data Structure
 I chose a priority queue idea for this program because the patients should not be evacuated in simple arrival order. In this wildfire scenario, the most important rule is that higher-priority patients must be considered first, especially critical patients.
 
 ## Triage rules
