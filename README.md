@@ -2,7 +2,7 @@
 A command line utility system for a hospital operating during a Wildfire 
 
 ## Scenerio
-You are running a field hospital during a wildfire. There is a huge ring of fire that is entrapping the whole city and blocking all exits. The only way out is by helicopter but there is limited space so only a select few can escape at a time.
+You are running a field hospital during a wildfire. This wildfire is caused Lord Ozai from the Avatar: The Last Airbender and there is a huge ring of fire that is entrapping the whole city and blocking all exits. The only way out is by helicopter but there is limited space so only a select few can escape at a time and the Avatar has been gone for 100 years.
 
 ## Triage rules
 Patients are assigned based on how critical your patients are, there will be a Helicopter that will come and pick patients up. The priority is based on how critical your health and those with a worse conditon will leave first.
