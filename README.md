@@ -2,7 +2,7 @@
 A command line utility system for a hospital operating during a Wildfire 
 
 ## Scenerio
-You are running a field hospital during a wildfire
+You are running a field hospital during a wildfire. There is a huge ring of fire that is entrapping the whole city and blocking all exits. The only way out is by helicopter but there is limited space so only a select few can escape at a time.
 
 ## Triage rules
 Patients are assigned based on how critical your patients are, there will be a Helicopter that will come and pick patients up. The priority is based on how critical your health and those with a worse conditon will leave first.
@@ -15,7 +15,7 @@ Patients are assigned based on how critical your patients are, there will be a H
 Java 17 or recent
 
 ## Using the app
-On launch the app will ask the user to set the amount of people the Helicopter and the amount of resources you will have. Input any value you want for both
+On launch the app will ask the user to set the amount of people the Helicopter and the amount of resources you will have. Input any value you want for both. You will then need to decide how many resources each priority patient needs. You will then be given a menu of 7 options to choose from.
 
 ## Project layout
 src/WildfireHelicopterTriage.java - main file that will run
